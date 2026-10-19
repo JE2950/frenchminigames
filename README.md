@@ -17,3 +17,7 @@ The vocabulary, genders and grammar come from the French department's own sheets
 - the whole-school matrix and the Dynamo 1 schemes of work (Modules 2 and 5).
 
 Controls: WASD to walk, the mouse to look, E or a click to use, Esc to pause. On a tablet, use the on-screen stick and the USE button.
+
+## Quick practice: Word Blaster
+
+The **Quick practice** button on the title screen opens a typing game for the mode picked above it. Pigeons swoop over Paris carrying a French phrase with a gap, plus its English (*les ___ vélos · the small bikes*). Type the missing French and press Enter to shoo them away. It uses the topics ticked on the title screen and has accent buttons; an answer with only an accent wrong still hits, for fewer points. Three hearts, faster waves, a best score for each mode, and a list of things to practise at the end.
