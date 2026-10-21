@@ -88,6 +88,7 @@ kbd { display: inline-block; background: #8b8b8b; color: #222; border: 2px solid
 #roomName { font-size: 1.05rem; color: #ffe08a; text-shadow: 2px 2px 0 #000; }
 #roomGoal { font-size: .85rem; color: #ddd; margin-top: 3px; }
 #roomHint { font-size: .8rem; color: #ffe9a8; margin-top: 3px; }
+body.assessment-mode #roomName::after { content: ' · Assessment'; color: #ffe9a8; font-size: .8em; }
 .ach-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
 .ach { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; color: #e8e8e8; }
 .ach .ic { flex: 0 0 22px; height: 22px; display: grid; place-items: center; background: #3a3a3a; border: 2px solid #000; font-size: .8rem; }
@@ -293,6 +294,10 @@ body.touch #touch.on { display: block; }
     <h3>Question types</h3>
     <div class="ticks" id="qtypes"></div>
     <div class="status" id="setupStatus"></div>
+  </div>
+  <div class="panel">
+    <h3>Help</h3>
+    <div class="ticks"><label class="tick"><input type="checkbox" id="helpToggle"><span class="box"></span><span>Help button (vocab and grammar)<span class="ch">untick for assessment mode</span></span></label></div>
   </div>
   <div class="start-row"><button class="mc-btn big" id="startBtn">Start ▶</button><button class="mc-btn big" id="wbBtn">⚡ Quick practice: Word Blaster</button></div>
   <div class="controls-line">
@@ -2052,6 +2057,7 @@ const store = {
   set(k, v) { try { localStorage.setItem('fmg.' + k, JSON.stringify(v)); } catch (e) {} },
 };
 let qTypes = { mc: true, typed: true };
+let helpEnabled = store.get('help', true) !== false;
 
 function loadMode(i) {
   MODE = MODES[i];
@@ -2331,7 +2337,7 @@ function renderQuestion() {
   const q = cur.q, it = MODE.item(cur.L.room, cur.L.k), max = maxAttempts(q);
   let h = `<div class="q-head"><span>${esc(MODE.rooms[cur.L.room].name)} · ${esc(LOCK_NAME[BL[cur.L.b].lock])}</span><span class="nm"><img class="q-ic" src="${ICONS[it[2]]}" alt=""> ${esc(it[0])} (${esc(it[1])})</span></div>`;
   h += `<div class="q-task">${esc(q.prompt)}</div>${q.body}`;
-  h += `<div class="q-meta"><div class="dots">Tries: ${Array.from({ length: max }, (_, a) => `<span class="dot" id="qd${a}"></span>`).join('')}</div><button class="mc-btn small" id="qHelp">📖 Help</button></div>`;
+  h += `<div class="q-meta"><div class="dots">Tries: ${Array.from({ length: max }, (_, a) => `<span class="dot" id="qd${a}"></span>`).join('')}</div>${helpEnabled ? '<button class="mc-btn small" id="qHelp">📖 Help</button>' : ''}</div>`;
   h += `<div class="gtable" id="qTable"></div>`;
   if (q.opts) h += `<div class="choices">${q.opts.map((o, i) => `<button class="mc-btn choice" data-opt="${i}"><span class="k">${i + 1}</span><span>${esc(o.text)}</span></button>`).join('')}</div>`;
   else h += `<div class="typed"><input id="qInput" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${esc(q.placeholder || 'Type here…')}" aria-label="Your answer"><button class="mc-btn" id="qCheck">Check ✔</button></div>` +
@@ -2453,6 +2459,8 @@ function syncSetup() {
   document.querySelectorAll('[data-grp]').forEach(i => i.checked = !!picks[i.dataset.grp]);
   document.querySelectorAll('[data-qtype]').forEach(i => i.checked = !!qTypes[i.dataset.qtype]);
   store.set(MODE.key + '.groups', picks); store.set('types', qTypes);
+  $('helpToggle').checked = helpEnabled; store.set('help', helpEnabled);
+  document.body.classList.toggle('assessment-mode', !helpEnabled);
   const st = $('setupStatus'), btn = $('startBtn');
   const warn = m => { st.textContent = m; st.className = 'status warn'; btn.disabled = true; };
   if (!MODE.groups.some(g => picks[g.k])) return warn('Tick at least one topic.');
@@ -2465,6 +2473,7 @@ document.addEventListener('change', e => {
   const t = e.target;
   if (t.dataset.grp) { const p = Object.assign({}, MODE.picks()); p[t.dataset.grp] = t.checked; MODE.setPicks(p); syncSetup(); }
   else if (t.dataset.qtype) { qTypes[t.dataset.qtype] = t.checked; syncSetup(); }
+  else if (t.id === 'helpToggle') { helpEnabled = t.checked; syncSetup(); }
 });
 function toTitle() {
   mode = 'title'; game = null; cur = null; clearLabels();
@@ -2575,7 +2584,7 @@ document.addEventListener('click', e => {
   if (t.closest('#skipBtn') && mode === 'finale') { winGame(); return; }
   if (mode === 'note' && t.closest('#noteClose')) { closeNote(); return; }
   if (mode !== 'question' || !cur) return;
-  if (t.closest('#qHelp')) { showHelp(); sfx.click(); return; }
+  if (t.closest('#qHelp') && helpEnabled) { showHelp(); sfx.click(); return; }
   if (t.closest('#qDone')) { closeQuestion(); return; }
   const acc = t.closest('[data-acc]'); if (acc) { insertAccent(acc.dataset.acc); return; }
   if (t.closest('#qCheck')) { checkTypedAnswer(); return; }
